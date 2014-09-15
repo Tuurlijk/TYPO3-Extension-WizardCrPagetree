@@ -10,7 +10,7 @@
  * writing. "version" and "dependencies" must not be touched!
  ***************************************************************/
 
-$EM_CONF[$_EXTKEY] = array (
+$EM_CONF[$_EXTKEY] = array(
 	'title' => 'Web>Func, Wizards, Create page tree',
 	'description' => 'Wizard that will create a page tree for you. Feed it with a space indented tree structure of the desired pages and the pages will be created for you.',
 	'category' => 'module',
@@ -32,20 +32,18 @@ $EM_CONF[$_EXTKEY] = array (
 	'author_company' => 'Donation Based Hosting',
 	'CGLcompliance' => NULL,
 	'CGLcompliance_note' => NULL,
-	'constraints' => 
-	array (
-		'depends' => 
-		array (
-			'func_wizards' => '',
-			'' => '',
+	'constraints' =>
+		array(
+			'depends' => array(
+				'func_wizards' => '',
+				'typo3' => '4.5.0-6.2.99',
+				'php' => '5.3.0-0.0.0'
+			),
+			'conflicts' =>
+				array(),
+			'suggests' =>
+				array(),
 		),
-		'conflicts' => 
-		array (
-		),
-		'suggests' => 
-		array (
-		),
-	),
 );
 
 ?>

@@ -22,10 +22,14 @@ namespace MichielRoos\WizardCrpagetree;
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  */
+use TYPO3\CMS\Backend\Tree\View\BrowseTreeView;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
+use TYPO3\CMS\Backend\Utility\IconUtility;
+use TYPO3\CMS\Core\DataHandling\DataHandler;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Imaging\Icon;
 use TYPO3\CMS\Core\Imaging\IconFactory;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Frontend\Page\PageRepository;
 
 /**
  * Creates the "Create pagetree" wizard
@@ -46,8 +50,8 @@ class CreatePageTree extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule
         $theCode = '';
         $pageTree = array();
         // create new pages here?
-        $pRec = BackendUtility::getRecord('pages', $this->pObj->id, 'uid', ' AND ' . $GLOBALS['BE_USER']->getPagePermsClause(8));
-        $sysPages = GeneralUtility::makeInstance('TYPO3\\CMS\\Frontend\\Page\\PageRepository');
+        $pRec = BackendUtility::getRecord('pages', $this->pObj->id, 'uid, title', ' AND ' . $GLOBALS['BE_USER']->getPagePermsClause(8));
+        $sysPages = GeneralUtility::makeInstance(PageRepository::class);
         $menuItems = $sysPages->getMenu($this->pObj->id);
         if (is_array($pRec)) {
             if (GeneralUtility::_POST('newPageTree') === 'submit') {
@@ -124,7 +128,7 @@ class CreatePageTree extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule
 
                     if (count($pageTree['pages'])) {
                         reset($pageTree);
-                        $tce = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\DataHandling\\DataHandler');
+                        $tce = GeneralUtility::makeInstance(DataHandler::class);
                         $tce->stripslashes_values = 0;
                         //reverseOrder does not work with nested arrays
                         //$tce->reverseOrder=1;
@@ -136,24 +140,31 @@ class CreatePageTree extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule
                     }
 
                     // Display result:
-                    /** @var \TYPO3\CMS\Backend\Tree\View\BrowseTreeView $tree */
-                    $tree = GeneralUtility::makeInstance('TYPO3\\CMS\\Backend\\Tree\\View\\BrowseTreeView');
-                    $iconFactory = GeneralUtility::makeInstance(IconFactory::class);
-
+                    /** @var BrowseTreeView $tree */
+                    $tree = GeneralUtility::makeInstance(BrowseTreeView::class);
                     $tree->init(' AND pages.doktype < 199 AND pages.hidden = "0"');
                     $tree->thisScript = 'index.php';
                     $tree->ext_IconMode = true;
                     $tree->expandAll = true;
-                    $tree->tree[] = array(
-                        'row' => $thePid,
-                        'title' => 'blip',
-                        'HTML' => $iconFactory->getIconForRecord('pages', array($thePid), Icon::SIZE_SMALL)->render()
-                    );
+
+                    if (version_compare(TYPO3_branch, '6.2', '>')) {
+                        $iconFactory = GeneralUtility::makeInstance(IconFactory::class);
+                        $tree->tree[] = array(
+                            'row' => $pRec,
+                            'HTML' => $iconFactory->getIconForRecord('pages', array($thePid), Icon::SIZE_SMALL)->render()
+                        );
+                    }
+                    if (version_compare(TYPO3_branch, '6.2', '=')) {
+                        $tree->setTreeName('pageTree');
+                        $tree->tree[] = array(
+                            'row' => $pRec,
+                            'HTML' => IconUtility::getSpriteIconForRecord('pages', $pRec)
+                        );
+                    }
                     $tree->getTree($thePid);
 
                     $theCode .= $this->getLanguageLabel('wiz_newPageTree_created');
                     $theCode .= $tree->printTree();
-
                 }
             } else {
                 $theCode .= $this->displayCreatForm();
